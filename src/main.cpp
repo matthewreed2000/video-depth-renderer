@@ -1,6 +1,20 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+
+GLuint compileShader(const char* filename, GLenum type) {
+	std::fstream stream(filename);
+
+	std::string line;
+	std::stringstream ss;
+}
+
+inline void resizeWindow(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
+}
 
 int main(int argc, char** argv) {
 	// Declaring Variables
@@ -27,6 +41,23 @@ int main(int argc, char** argv) {
 	}
 
 	glfwMakeContextCurrent(window);
+
+	glfwSetWindowSizeCallback(window, resizeWindow);
+
+	// Setup Simple Quad
+	GLfloat vertices[] = {
+		-0.5, -0.5,  0.5, 1.0, 0.0, 0.0, 0.0, 0.0,
+		 0.5, -0.5,  0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
+		 0.5,  0.5,  0.5, 1.0, 0.0, 0.0, 1.0, 1.0,
+		 -0.5,  0.5,  0.5, 1.0, 0.0, 0.0, 0.0, 1.0};
+
+	GLuint indices[] = {0, 1, 2, 3};
+
+	// Setup Pipeline
+	GLuint vertShader = compileShader("res/shader/basic.vert", GL_VERTEX_SHADER);
+	GLuint tessShader = compileShader("res/shader/basic.vert", GL_TESS_CONTROL_SHADER);
+	GLuint evalShader = compileShader("res/shader/basic.vert", GL_TESS_EVALUATION_SHADER);
+	GLuint fragShader = compileShader("res/shader/basic.vert", GL_FRAGMENT_SHADER);
 
 	// Allow for correct depth rendering
 	glEnable(GL_DEPTH_TEST);
