@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(lib/glfw)
 add_subdirectory(lib/ffmpeg)
+add_subdirectory(lib/glm)
 
 if (APPLE)
 	list(APPEND EXTRA_LIBS
@@ -25,4 +26,4 @@ list(APPEND SOURCES
 )
 
 add_executable(video-depth-renderer ${SOURCES})
-target_link_libraries(video-depth-renderer ffmpeg glfw ${EXTRA_LIBS})
+target_link_libraries(video-depth-renderer ffmpeg glfw glm ${EXTRA_LIBS})
