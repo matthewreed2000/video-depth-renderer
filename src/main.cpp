@@ -2,14 +2,27 @@
 #include <fstream>
 #include <sstream>
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-GLuint compileShader(const char* filename, GLenum type) {
+GLuint compileShaderSrc(const char* filename, GLenum type) {
 	std::fstream stream(filename);
 
 	std::string line;
 	std::stringstream ss;
+
+	GLuint id;
+
+	while (getline(stream, line))
+		ss << line << '\n';
+
+	id = glCreateShader(type);
+	const char* src = ss.str().c_str();
+	glShaderSource(id, 1, &src, nullptr);
+	glCompileShader(id);
+
+	return id;
 }
 
 inline void resizeWindow(GLFWwindow* window, int width, int height) {
@@ -54,10 +67,10 @@ int main(int argc, char** argv) {
 	GLuint indices[] = {0, 1, 2, 3};
 
 	// Setup Pipeline
-	GLuint vertShader = compileShader("res/shader/basic.vert", GL_VERTEX_SHADER);
-	GLuint tessShader = compileShader("res/shader/basic.vert", GL_TESS_CONTROL_SHADER);
-	GLuint evalShader = compileShader("res/shader/basic.vert", GL_TESS_EVALUATION_SHADER);
-	GLuint fragShader = compileShader("res/shader/basic.vert", GL_FRAGMENT_SHADER);
+	GLuint vertShader = compileShaderSrc("res/shader/basic.vert", GL_VERTEX_SHADER);
+	GLuint tessShader = compileShaderSrc("res/shader/basic.vert", GL_TESS_CONTROL_SHADER);
+	GLuint evalShader = compileShaderSrc("res/shader/basic.vert", GL_TESS_EVALUATION_SHADER);
+	GLuint fragShader = compileShaderSrc("res/shader/basic.vert", GL_FRAGMENT_SHADER);
 
 	// Allow for correct depth rendering
 	glEnable(GL_DEPTH_TEST);
