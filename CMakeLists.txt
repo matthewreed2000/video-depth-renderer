@@ -13,12 +13,12 @@ if (APPLE)
 	)
 elseif(WIN32)
 	list(APPEND EXTRA_LIBS
-		"-lglu32 -lopengl32"
+		"-lglew32 -lopengl32"
 	)
 	set(CMAKE_EXE_LINKER_FLAGS "-std=gnu99 -static -static-libgcc -static-libstdc++ -mwindows")
 else()
 	list(APPEND EXTRA_LIBS
-		"-lGL -lX11"
+		"-lGL -lGLEW -lX11"
 	)
 endif()
 
