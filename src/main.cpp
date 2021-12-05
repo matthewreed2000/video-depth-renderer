@@ -81,10 +81,13 @@ int main(int argc, char** argv) {
 	ElementBuffer ebo(indices, sizeof(indices));
 	ebo.bind();
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	vao.linkAttrib<float>(vbo, 0, 3, 5 * sizeof(float), (void*)0);
+	vao.linkAttrib<float>(vbo, 1, 2, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+	// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	// glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	// glEnableVertexAttribArray(0);
+	// glEnableVertexAttribArray(1);
 
 	// Unbind to Prevent Accidental Changes
 	glBindVertexArray(0);
