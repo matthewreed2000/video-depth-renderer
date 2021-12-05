@@ -7,46 +7,11 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-std::string readText(const char* filename) {
-
-	std::fstream f(filename);
-
-	if (!f.good())
-	{
-		printf("Failed to open file %s\n", filename);
-	}
-
-	std::string line;
-	std::stringstream ss;
-
-	while (getline(f, line)) {
-		ss << line << '\n';
-	}
-
-	return ss.str();
-}
-
-GLuint compileShaderSrc(const char* filename, GLenum shaderType) {
-
-	GLuint id;
-	
-	std::string srcStr = readText(filename);
-
-	if (srcStr.compare("") == 0)
-	{
-		printf("Source File Empty\n");
-		throw 1;
-	}
-	else
-		printf("##########\n%s:\n\n%s\n##########", filename, srcStr.c_str());
-
-	id = glCreateShader(shaderType);
-	const char* src = srcStr.c_str();
-	glShaderSource(id, 1, &src, nullptr);
-	glCompileShader(id);
-
-	return id;
-}
+#include "shader.hpp"
+#include "shader_program.hpp"
+#include "vertex_buffer.hpp"
+#include "element_buffer.hpp"
+#include "vertex_array.hpp"
 
 inline void resizeWindow(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -96,31 +61,25 @@ int main(int argc, char** argv) {
 	unsigned int indices[] = {0, 1, 2, 2, 3, 0};
 
 	// // Setup Shader Pipeline
-	unsigned int vertShader = compileShaderSrc("../res/shaders/basic.vert", GL_VERTEX_SHADER);
-	unsigned int fragShader = compileShaderSrc("../res/shaders/basic.frag", GL_FRAGMENT_SHADER);
+	Shader vertShader("../res/shaders/basic.vert", GL_VERTEX_SHADER);
+	Shader fragShader("../res/shaders/basic.frag", GL_FRAGMENT_SHADER);
 
-	unsigned int shader = glCreateProgram();
-	glAttachShader(shader, vertShader);
-	glAttachShader(shader, fragShader);
-	glLinkProgram(shader);
+	ShaderProgram shaderProgram;
+	shaderProgram.add(vertShader);
+	shaderProgram.add(fragShader);
 
-	glDeleteShader(vertShader);
-	glDeleteShader(fragShader);
+	vertShader.destroy();
+	fragShader.destroy();
 
 	// Setup Buffers
-	unsigned int vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	VertexArray vao;
+	vao.bind();
 
-	unsigned int vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	VertexBuffer vbo(vertices, sizeof(vertices));
+	vbo.bind();
 
-	unsigned int ebo;
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	ElementBuffer ebo(indices, sizeof(indices));
+	ebo.bind();
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -135,28 +94,22 @@ int main(int argc, char** argv) {
 	// GL Settings for Main Loop
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
-	glUseProgram(shader);
 	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	ebo.bind();
 
 	// Main Loop
 	while (!glfwWindowShouldClose(window)) {
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(shader);
-		glBindVertexArray(vao);
+		shaderProgram.bind();
+		vao.bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 		// Swap buffers and poll events
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteBuffers(1, &ebo);
-	glDeleteBuffers(1, &vbo);
-	glDeleteVertexArrays(1, &vao);
-	glDeleteProgram(shader);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
