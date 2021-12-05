@@ -1,30 +1,38 @@
+# Based on: https://shot511.github.io/2018-05-29-how-to-setup-opengl-project-with-cmake/
 cmake_minimum_required(VERSION 3.14)
 project(video-depth-renderer C CXX)
-set(CMAKE_CXX_STANDARD 14)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/lib/glad)
+# Add source files
+file(GLOB_RECURSE SOURCE_FILES
+	${CMAKE_SOURCE_DIR}/src/*.c
+	${CMAKE_SOURCE_DIR}/src/*.cpp
+	${CMAKE_SOURCE_DIR}/lib/glad/src/glad.c
+)
+
+# Add header files
+file(GLOB_RECURSE HEADER_FILES
+	${CMAKE_SOURCE_DIR}/src/*.h
+	${CMAKE_SOURCE_DIR}/src/*.hpp
+)
+
+# Define the executable
+add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
+
+# External Libraries
+find_package(OpenGL REQUIRED)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/lib/glfw)
 add_subdirectory(${PROJECT_SOURCE_DIR}/lib/glm)
 add_subdirectory(${PROJECT_SOURCE_DIR}/lib/ffmpeg)
 
-if (APPLE)
-	list(APPEND EXTRA_LIBS
-		"-framework OpenGL"
-	)
-elseif(WIN32)
-	list(APPEND EXTRA_LIBS
-		"-lglew32 -lopengl32"
-	)
-	set(CMAKE_EXE_LINKER_FLAGS "-std=gnu99 -static -static-libgcc -static-libstdc++ -mwindows")
-else()
-	list(APPEND EXTRA_LIBS
-		"-lGL -lGLEW -lX11"
-	)
-endif()
+add_library(GLAD "${CMAKE_SOURCE_DIR}/lib/glad/src/glad.c")
 
-list(APPEND SOURCES
-	${PROJECT_SOURCE_DIR}/src/main.cpp
+set(LIBS glfw OpenGL::GL GLAD)
+
+# Define the include DIRs
+include_directories(
+	"${CMAKE_SOURCE_DIR}/lib/glad/include"
 )
 
-add_executable(video-depth-renderer ${SOURCES})
-target_link_libraries(video-depth-renderer glad glfw glm ffmpeg ${EXTRA_LIBS})
+# Define the link libraries
+target_link_libraries(${PROJECT_NAME} ${LIBS})
