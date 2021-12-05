@@ -90,9 +90,9 @@ int main(int argc, char** argv) {
 	// glEnableVertexAttribArray(1);
 
 	// Unbind to Prevent Accidental Changes
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	vao.unbind();
+	vbo.unbind();
+	ebo.unbind();
 
 	// GL Settings for Main Loop
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
