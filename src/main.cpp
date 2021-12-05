@@ -3,7 +3,7 @@
 #include <sstream>
 #include <stdio.h>
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // #include <glm/glm.hpp>
 
@@ -78,9 +78,8 @@ int main(int argc, char** argv) {
 
 	// glfwSetWindowSizeCallback(window, resizeWindow);
 
-	// Init GLEW
-	if (glewInit() != GLEW_OK)
-		printf("Error!");
+	// Initialize GLAD
+	gladLoadGL();
 
 	printf("%s\n", glGetString(GL_VERSION));
 
