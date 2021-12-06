@@ -1,7 +1,5 @@
 #include "texture.hpp"
 
-#include <glad/glad.h>
-
 Texture::Texture(int slotNum) {
 	slot = slotNum;
 
@@ -22,9 +20,9 @@ Texture::~Texture() {
 	glDeleteTextures(1, &id);
 }
 
-void Texture::assignBuffer(unsigned char* data, int width, int height) {
+void Texture::assignBuffer(unsigned char* data, int width, int height, unsigned int outType) {
 	bind();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, outType, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	unbind();
 }
 

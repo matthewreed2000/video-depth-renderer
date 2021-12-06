@@ -1,0 +1,29 @@
+// Tessellation evaluation shader
+#version 450 core
+
+// layout (triangles, equal_spacing, cw) in;
+layout (quads) in;
+
+in vec2 tc_Texture[];
+in vec3 tc_Position[];
+out vec2 te_Texture;
+out vec3 te_Color;
+
+uniform sampler2D tex1;
+uniform mat4 u_MVP;
+
+void main(void) {
+
+ float u = gl_TessCoord.x, v = gl_TessCoord.y;
+
+ float ta = mix(tc_Texture[0].x, tc_Texture[2].x, u);
+ float tb = mix(tc_Texture[0].y, tc_Texture[2].y, v);
+ te_Texture = vec2(ta, tb);
+
+ float pa = mix(tc_Position[0].x, tc_Position[2].x, u);
+ float pb = mix(tc_Position[0].y, tc_Position[2].y, v);
+ // gl_Position = uMPV * vec4(pa, pb, -1 * texture(tex1, te_Texture).r, 1.0f);
+ gl_Position = uMPV * vec4(pa, pb, -1.0f, 1.0f);
+
+ te_Color = vec3(te_Texture, 0);
+}

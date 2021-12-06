@@ -1,0 +1,23 @@
+// Tessellation control shader
+#version 450 core
+layout (vertices = 4) out;
+
+in vec2 v_Texture[];
+in vec3 v_Position[];
+out vec2 tc_Texture[];
+out vec3 tc_Position[];
+
+void main(void) {
+    // Only if I am invocation 0 ...
+    if (gl_InvocationID == 0) {
+        gl_TessLevelInner[0] = 5;
+        gl_TessLevelInner[1] = 5;
+        gl_TessLevelOuter[0] = 5;
+        gl_TessLevelOuter[1] = 5;
+        gl_TessLevelOuter[2] = 5;
+        gl_TessLevelOuter[3] = 5;
+    }
+    // Everybody copies their input to their output
+    tc_Position[gl_InvocationID] = v_Position[gl_InvocationID];
+    tc_Texture[gl_InvocationID] = v_Texture[gl_InvocationID];
+}

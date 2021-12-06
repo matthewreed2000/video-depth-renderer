@@ -64,9 +64,9 @@ int main(int argc, char** argv) {
 	}
 
 	// // Specify OpenGL Version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	// glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	// glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	// glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Create Window
 	GLFWwindow* window = glfwCreateWindow(640, 480, "Video Depth Renderer", NULL, NULL);
@@ -80,6 +80,8 @@ int main(int argc, char** argv) {
 
 	glfwSetWindowSizeCallback(window, resizeWindow);
 
+	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	// Initialize GLAD
 	gladLoadGL();
 
@@ -89,22 +91,32 @@ int main(int argc, char** argv) {
 
 	// Setup Simple Mesh
 	float vertices[] = {
-		-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,
-		 1.0f, -1.0f, -1.0f, 1.0f, 1.0f,
-		 1.0f,  1.0f, -1.0f, 1.0f, 0.0f,
-		-1.0f,  1.0f, -1.0f, 0.0f, 0.0f
+		-1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+		 1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+		 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f, 0.0f, 0.0f
 	};
 	unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+	// unsigned int indices[] = {0, 1, 2, 3};
 
 	// // Setup Shader Pipeline
 	Shader vertShader("res/shaders/basic.vert", GL_VERTEX_SHADER);
 	Shader fragShader("res/shaders/basic.frag", GL_FRAGMENT_SHADER);
 
+	// Shader vertShader("res/shaders/simpleTess.vert", GL_VERTEX_SHADER);
+	// Shader tessShader("res/shaders/simpleTess.tcs", GL_TESS_CONTROL_SHADER);
+	// Shader evalShader("res/shaders/simpleTess.tes", GL_TESS_EVALUATION_SHADER);
+	// Shader fragShader("res/shaders/simpleTess.frag", GL_FRAGMENT_SHADER);
+
 	ShaderProgram shaderProgram;
 	shaderProgram.add(vertShader);
+	// shaderProgram.add(tessShader);
+	// shaderProgram.add(evalShader);
 	shaderProgram.add(fragShader);
 
 	vertShader.destroy();
+	// tessShader.destroy();
+	// evalShader.destroy();
 	fragShader.destroy();
 
 	// Setup Buffers
@@ -128,42 +140,62 @@ int main(int argc, char** argv) {
 	ebo.bind();
 
 	// Set up video reader
-	VideoReader vr(filenameColor);
-	if (!vr.getSuccess()) {
+	VideoReader colorVR(filenameColor);
+	if (!colorVR.getSuccess()) {
 		printf("Could not set up video reader\n");
 		return 1;
 	}
 
-	const unsigned int frameWidth = vr.getWidth();
-	const unsigned int frameHeight = vr.getHeight();
+	VideoReader depthVR(filenameColor);
+	if (!depthVR.getSuccess()) {
+		printf("Could not set up video reader\n");
+		return 1;
+	}
 
-	unsigned char* frame = nullptr;
-	vr.readFrame(&frame);
+	const unsigned int frameWidth = colorVR.getWidth();
+	const unsigned int frameHeight = colorVR.getHeight();
+
+	unsigned char* colorFrame = nullptr;
+	unsigned char* depthFrame = nullptr;
+	colorVR.readFrame(&colorFrame);
+	depthVR.readFrame(&depthFrame);
 
 	// Set up texture for frames
-	Texture texture(0);
-	texture.assignBuffer(frame, vr.getWidth(), vr.getHeight());
+	Texture colorTexture(0);
+	colorTexture.assignBuffer(colorFrame, colorVR.getWidth(), colorVR.getHeight());
 	shaderProgram.assignUniform1i("tex0", 0);
 
-	texture.bind();
+	Texture depthTexture(1);
+	depthTexture.assignBuffer(depthFrame, depthVR.getWidth(), depthVR.getHeight(), GL_RED);
+	shaderProgram.assignUniform1i("tex1", 1);
+
+	colorTexture.bind();
+	depthTexture.bind();
 
 	// GL Settings for Main Loop
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 
 	// More Variables for Main Loop
-	glm::mat4 frameScale;
-	if (frameWidth > frameHeight)
-		frameScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, (float)frameHeight/frameWidth, 1.0f));
-	else
-		frameScale = glm::scale(glm::mat4(1.0f), glm::vec3((float)frameWidth/frameHeight, 1.0f, 1.0f));
-
-	glm::mat4 windowScale = glm::mat4(1.0f);
-
 	int width = 0;
 	int height = 0;
 	int prevWidth = 0;
 	int prevHeight = 0;
+
+	float rotation = 0.0f;
+
+	glm::mat4 mScale;
+	if (frameWidth > frameHeight)
+		mScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, (float)frameHeight/frameWidth, 1.0f));
+	else
+		mScale = glm::scale(glm::mat4(1.0f), glm::vec3((float)frameWidth/frameHeight, 1.0f, 1.0f));
+
+	glm::mat4 mRotation = glm::mat4(1.0f);
+
+	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 proj = glm::mat4(1.0f);
+	glm::mat4 mvp = glm::mat4(1.0f);
 
 	// Main Loop
 	while (!glfwWindowShouldClose(window)) {
@@ -176,18 +208,39 @@ int main(int argc, char** argv) {
 			prevWidth = width;
 			prevHeight = height;
 
-			if (width > height)
-				windowScale = glm::scale(glm::mat4(1.0f), glm::vec3((float)height/width, 1.0f, 1.0f));
-			else
-				windowScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, (float)width/height, 1.0f));
+			// if (width > height)
+			// 	windowScale = glm::scale(glm::mat4(1.0f), glm::vec3((float)height/width, 1.0f, 1.0f));
+			// else
+			// 	windowScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, (float)width/height, 1.0f));
+
+			proj = glm::perspective(glm::radians(45.0f), (float)width/height, 0.1f, 100.0f);
 		}
 
-		shaderProgram.assignUniform4fv("u_WindowScale", windowScale);
-		shaderProgram.assignUniform4fv("u_FrameScale", frameScale);
+		// shaderProgram.assignUniform4fv("u_WindowScale", windowScale);
+		// shaderProgram.assignUniform4fv("u_FrameScale", frameScale);
+
+
+		// First, scale the model to match aspect ratio
+		// glm::mat4 model = frameScale;
+		// glm::mat4 view = glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f));
+		// glm::mat4 proj = windowScale * defaultProj;
+		// glm::mat4 proj = defaultProj;
+
+		rotation += 0.5f;
+
+		mRotation = glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		model = mRotation * mScale;
+		view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f));
+
+		mvp = proj * view * model;
+
+		shaderProgram.assignUniform4fv("u_MVP", mvp);
 
 		shaderProgram.bind();
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		// glDrawElements(GL_PATCHES, 4, GL_UNSIGNED_INT, nullptr);
 
 		// Swap buffers and poll events
 		glfwSwapBuffers(window);
