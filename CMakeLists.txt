@@ -27,7 +27,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/lib/ffmpeg)
 
 add_library(GLAD "${CMAKE_SOURCE_DIR}/lib/glad/src/glad.c")
 
-set(LIBS glfw OpenGL::GL GLAD)
+set(LIBS glfw OpenGL::GL GLAD ffmpeg glm)
 
 # Define the include DIRs
 include_directories(
@@ -36,3 +36,8 @@ include_directories(
 
 # Define the link libraries
 target_link_libraries(${PROJECT_NAME} ${LIBS})
+
+# Copy Required Files
+add_custom_command(TARGET video-depth-renderer PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/res/ $<TARGET_FILE_DIR:video-depth-renderer>/res)

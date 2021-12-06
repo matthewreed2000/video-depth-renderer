@@ -1,7 +1,8 @@
 #pragma once
 
 #include "shader.hpp"
-#include <initializer_list>
+
+#include <glm/glm.hpp>
 
 class ShaderProgram {
 public:
@@ -9,6 +10,10 @@ public:
 	~ShaderProgram();
 
 	void add(Shader& shader);
+	
+	void assignUniform1i(const char* uniformName, int value);
+	void assignUniform4fv(const char* uniformName, glm::mat4& value);
+
 	void bind();
 	void unbind();
 	void destroy();
