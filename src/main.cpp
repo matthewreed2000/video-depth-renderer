@@ -96,30 +96,37 @@ int main(int argc, char** argv) {
 		 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
 		-1.0f,  1.0f, 0.0f, 0.0f, 0.0f
 	};
-	unsigned int indices[] = {0, 1, 2, 2, 3, 0};
-	// unsigned int indices[] = {0, 1, 2, 3};
+	// unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+	unsigned int indices[] = {0, 1, 2, 3};
 
-	// // Setup Shader Pipeline
-	Shader vertShader("res/shaders/basic.vert", GL_VERTEX_SHADER);
-	Shader fragShader("res/shaders/basic.frag", GL_FRAGMENT_SHADER);
+	// Setup Shader Pipeline
+	// Shader vertShader("res/shaders/basic.vert", GL_VERTEX_SHADER);
+	// Shader fragShader("res/shaders/basic.frag", GL_FRAGMENT_SHADER);
 
-	// Shader vertShader("res/shaders/simpleTess.vert", GL_VERTEX_SHADER);
-	// Shader tessShader("res/shaders/simpleTess.tcs", GL_TESS_CONTROL_SHADER);
-	// Shader evalShader("res/shaders/simpleTess.tes", GL_TESS_EVALUATION_SHADER);
-	// Shader fragShader("res/shaders/simpleTess.frag", GL_FRAGMENT_SHADER);
+	Shader vertShader("../res/shaders/simpleTess.vert", GL_VERTEX_SHADER);
+	Shader tessShader("../res/shaders/simpleTess.tcs", GL_TESS_CONTROL_SHADER);
+	Shader evalShader("../res/shaders/simpleTess.tes", GL_TESS_EVALUATION_SHADER);
+	Shader fragShader("../res/shaders/simpleTess.frag", GL_FRAGMENT_SHADER);
+
+	// Shader vertShader("res/shaders/copy.vert", GL_VERTEX_SHADER);
+	// Shader tessShader("res/shaders/copy.tcs", GL_TESS_CONTROL_SHADER);
+	// Shader evalShader("res/shaders/copy.tes", GL_TESS_EVALUATION_SHADER);
+	// Shader fragShader("res/shaders/copy.frag", GL_FRAGMENT_SHADER);
 
 	ShaderProgram shaderProgram;
 	shaderProgram.add(vertShader);
-	// shaderProgram.add(tessShader);
-	// shaderProgram.add(evalShader);
+	shaderProgram.add(tessShader);
+	shaderProgram.add(evalShader);
 	shaderProgram.add(fragShader);
 
 	vertShader.destroy();
-	// tessShader.destroy();
-	// evalShader.destroy();
+	tessShader.destroy();
+	evalShader.destroy();
 	fragShader.destroy();
 
 	// Setup Buffers
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
+
 	VertexArray vao;
 	vao.bind();
 
@@ -173,7 +180,7 @@ int main(int argc, char** argv) {
 	depthTexture.bind();
 
 	// GL Settings for Main Loop
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.1f, 0.2f, 0.15f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 
 	// More Variables for Main Loop
@@ -196,6 +203,8 @@ int main(int argc, char** argv) {
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 proj = glm::mat4(1.0f);
 	glm::mat4 mvp = glm::mat4(1.0f);
+
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Main Loop
 	while (!glfwWindowShouldClose(window)) {
@@ -239,8 +248,9 @@ int main(int argc, char** argv) {
 
 		shaderProgram.bind();
 		vao.bind();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-		// glDrawElements(GL_PATCHES, 4, GL_UNSIGNED_INT, nullptr);
+		// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		// glDrawElements(GL_PATCHES, 6, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_PATCHES, 4, GL_UNSIGNED_INT, nullptr);
 
 		// Swap buffers and poll events
 		glfwSwapBuffers(window);

@@ -17,7 +17,7 @@ public:
 	void bind();
 	void unbind();
 	void destroy();
-private:
 	unsigned int id;
+private:
 	bool alive;
 };

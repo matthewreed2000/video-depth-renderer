@@ -23,6 +23,23 @@ Shader::Shader(const char* filename, unsigned int shaderType)
 		const char* src = srcStr.c_str();
 		glShaderSource(id, 1, &src, nullptr);
 		glCompileShader(id);
+
+		int isCompiled = 0;
+		glGetShaderiv(id, GL_COMPILE_STATUS, &isCompiled);
+
+		if (isCompiled == GL_FALSE)
+		{
+			int maxLength = 0;
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &maxLength);
+
+			char errorLog[maxLength];
+			glGetShaderInfoLog(id, maxLength, &maxLength, errorLog);
+
+			printf("%s\n", errorLog);
+
+			glDeleteShader(id);
+			id = 0;
+		}
 	}
 
 	else {

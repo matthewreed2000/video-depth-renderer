@@ -1,12 +1,19 @@
-#version 400 core
-layout (location = 0) in vec3 a_Pos;
-layout (location = 1) in vec2 a_Tex;
+#version 330 core
+layout (location = 0) in vec3 v_Pos;
+layout (location = 1) in vec2 v_Tex;
 
-uniform mat4 u_MVP;
+out vec3 tc_Pos;
+out vec2 tc_Tex;
 
-out vec3 vPosition;
- 
+// out vec3 f_Pos;
+// out vec2 f_Tex;
+
 void main()
 {
-    vPosition = a_Pos;
+    tc_Pos = v_Pos;
+    tc_Tex = v_Tex;
+
+    // f_Pos = (u_MVP * vec4(v_Pos, 1.0)).xyz;
+    // f_Tex = v_Tex;
+    // gl_Position = u_MVP * vec4(v_Pos, 1.0);
 }
