@@ -149,9 +149,10 @@ void VideoReader::destroy() {
 }
 
 bool VideoReader::readFrame(uint8_t** frameBuffer, int64_t* pts) {
+	int readResponse;
 	int response;
 
-	while (av_read_frame(avFormatCtx, avPacket) >= 0) {
+	for (readResponse = av_read_frame(avFormatCtx, avPacket); readResponse >= 0; readResponse = av_read_frame(avFormatCtx, avPacket)) {
 		if (avPacket->stream_index != videoStreamIndex) {
 			av_packet_unref(avPacket);
 			continue;
@@ -177,11 +178,21 @@ bool VideoReader::readFrame(uint8_t** frameBuffer, int64_t* pts) {
 		break;
 	}
 
+	// Repeat when end is reached
+	if ((readResponse == AVERROR_EOF) && repeat)
+		av_seek_frame(avFormatCtx, videoStreamIndex, 0, 0);
+
 	if (pts)
 		*pts = avFrame->pts;
 
+	width = avFrame->width;
+	height = avFrame->height;
+
 	// Set up sws scaler
 	if (!swsScalerCtx) {
+
+		printf("%dx%d\n", width, height);
+
 		// sws_getContext(int srcW, int srcH, enum AVPixelFormat srcFormat, int dstW, int dstH, enum AVPixelFormat dstFormat, int flags, SwsFilter *srcFilter, SwsFilter *dstFilter, const double *param)
 		swsScalerCtx = sws_getContext(width, height, avCodecCtx->pix_fmt, width, height, AV_PIX_FMT_RGB0, SWS_BILINEAR, NULL, NULL, NULL);
 
@@ -203,9 +214,6 @@ bool VideoReader::readFrame(uint8_t** frameBuffer, int64_t* pts) {
 
 	// sws_scale(struct SwsContext *c, const uint8_t *const *srcSlice, const int *srcStride, int srcSliceY, int srcSliceH, uint8_t *const *dst, const int *dstStride)
 	sws_scale(swsScalerCtx, avFrame->data, avFrame->linesize, 0, avFrame->height, dest, destLinesize);
-
-	width = avFrame->width;
-	height = avFrame->height;
 
 	return true;
 }

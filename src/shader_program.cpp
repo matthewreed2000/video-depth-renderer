@@ -27,6 +27,13 @@ void ShaderProgram::assignUniform1i(const char* uniformName, int value) {
 	unbind();
 }
 
+void ShaderProgram::assignUniform1f(const char* uniformName, float value) {
+	bind();
+	unsigned int location = glGetUniformLocation(id, uniformName);
+	glUniform1f(location, value);
+	unbind();
+}
+
 void ShaderProgram::assignUniform4fv(const char* uniformName, glm::mat4& value) {
 	bind();
 	unsigned int location = glGetUniformLocation(id, uniformName);

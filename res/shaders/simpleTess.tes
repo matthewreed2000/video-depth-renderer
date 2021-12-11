@@ -10,6 +10,8 @@ out vec3 f_Pos;
 out vec2 f_Tex;
 
 uniform mat4 u_MVP;
+uniform float u_Depth;
+
 uniform sampler2D tex1;
 
 vec2 interpolate2D(vec2 v0, vec2 v1)
@@ -22,7 +24,8 @@ vec2 interpolate2D(vec2 v0, vec2 v1)
 
 void main() {
     vec2 out_Tex = interpolate2D(te_Tex[0], te_Tex[2]);
-    vec3 out_Pos = vec3(interpolate2D(te_Pos[0].xy, te_Pos[2].xy), texture(tex1, out_Tex));
+    // vec3 out_Pos = vec3(interpolate2D(te_Pos[0].xy, te_Pos[2].xy), 0);
+    vec3 out_Pos = vec3(interpolate2D(te_Pos[0].xy, te_Pos[2].xy), texture(tex1, out_Tex).r * u_Depth);
 
     f_Pos = out_Pos;
     f_Tex = out_Tex;

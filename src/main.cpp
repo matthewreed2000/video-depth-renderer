@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "input_handler.hpp"
+
 #include "files.hpp"
 #include "shader.hpp"
 #include "shader_program.hpp"
@@ -49,7 +51,7 @@ int main(int argc, char** argv) {
 		printf("Succesfully found color file '%s'\n", filenameColor);
 	}
 
-	if (!files::exists(filenameColor)) {
+	if (!files::exists(filenameDepth)) {
 		printf("Failed to locate depth file '%s'\n", filenameDepth);
 		return 1;
 	}
@@ -78,6 +80,8 @@ int main(int argc, char** argv) {
 
 	glfwMakeContextCurrent(window);
 
+	InputHandler ih(window);
+
 	glfwSetWindowSizeCallback(window, resizeWindow);
 
 	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -91,13 +95,25 @@ int main(int argc, char** argv) {
 
 	// Setup Simple Mesh
 	float vertices[] = {
-		-1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-		 1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-		 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f,  1.0f, 0.0f, 0.0f, 0.0f
+		-1.0f, -1.0f, 0.0f, 0.0f, 1.0f, // 0 Bottom Left
+		 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, // 1 Bottom Right
+		 1.0f,  1.0f, 0.0f, 1.0f, 0.0f, // 2 Top Right
+		-1.0f,  1.0f, 0.0f, 0.0f, 0.0f, // 3 Top Left
+
+		 0.0f, -1.0f, 0.0f, 0.5f, 1.0f, // 4 Bottom
+		 0.0f,  0.0f, 0.0f, 0.5f, 0.5f, // 5 Center
+		-1.0f,  0.0f, 0.0f, 0.0f, 0.5f, // 6 Left
+		 1.0f,  0.0f, 0.0f, 1.0f, 0.5f, // 7 Right
+		 0.0f,  1.0f, 0.0f, 0.5f, 0.0f, // 8 Top
 	};
 	// unsigned int indices[] = {0, 1, 2, 2, 3, 0};
-	unsigned int indices[] = {0, 1, 2, 3};
+	// unsigned int indices[] = {0, 1, 2, 3};
+	unsigned int indices[] = {
+		0, 4, 5, 6,
+		4, 1, 7, 5,
+		6, 5, 8, 3,
+		5, 7, 2, 8
+	};
 
 	// Setup Shader Pipeline
 	// Shader vertShader("res/shaders/basic.vert", GL_VERTEX_SHADER);
@@ -153,19 +169,19 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	VideoReader depthVR(filenameColor);
+	VideoReader depthVR(filenameDepth);
 	if (!depthVR.getSuccess()) {
 		printf("Could not set up video reader\n");
 		return 1;
 	}
 
-	const unsigned int frameWidth = colorVR.getWidth();
-	const unsigned int frameHeight = colorVR.getHeight();
-
 	unsigned char* colorFrame = nullptr;
 	unsigned char* depthFrame = nullptr;
 	colorVR.readFrame(&colorFrame);
 	depthVR.readFrame(&depthFrame);
+
+	const unsigned int frameWidth = colorVR.getWidth();
+	const unsigned int frameHeight = colorVR.getHeight();
 
 	// Set up texture for frames
 	Texture colorTexture(0);
@@ -176,12 +192,13 @@ int main(int argc, char** argv) {
 	depthTexture.assignBuffer(depthFrame, depthVR.getWidth(), depthVR.getHeight(), GL_RED);
 	shaderProgram.assignUniform1i("tex1", 1);
 
-	colorTexture.bind();
 	depthTexture.bind();
+	colorTexture.bind();
 
 	// GL Settings for Main Loop
 	glClearColor(0.1f, 0.2f, 0.15f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// More Variables for Main Loop
 	int width = 0;
@@ -190,6 +207,7 @@ int main(int argc, char** argv) {
 	int prevHeight = 0;
 
 	float rotation = 0.0f;
+	float depth = 0.5f;
 
 	glm::mat4 mScale;
 	if (frameWidth > frameHeight)
@@ -204,7 +222,10 @@ int main(int argc, char** argv) {
 	glm::mat4 proj = glm::mat4(1.0f);
 	glm::mat4 mvp = glm::mat4(1.0f);
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Make sure the video plays back at the right speed
+	glfwSetTime(0.0);
+	int64_t ptsColor = 0;
+	int64_t ptsDepth = 0;
 
 	// Main Loop
 	while (!glfwWindowShouldClose(window)) {
@@ -225,6 +246,30 @@ int main(int argc, char** argv) {
 			proj = glm::perspective(glm::radians(45.0f), (float)width/height, 0.1f, 100.0f);
 		}
 
+		// Read color frame at speed
+		if (glfwGetTime() > ptsColor * (double)colorVR.getTimeBase().num / (double)colorVR.getTimeBase().den)
+		{
+			// Read new frame
+			if (!colorVR.readFrame(&colorFrame, &ptsColor)) {
+				printf("Couldn't load video frame\n");
+				return 1;
+			}
+			colorTexture.assignBuffer(colorFrame, colorVR.getWidth(), colorVR.getHeight());
+			colorTexture.bind();
+		}
+
+		// Read depth frame at speed
+		if (glfwGetTime() > ptsDepth * (double)depthVR.getTimeBase().num / (double)depthVR.getTimeBase().den)
+		{
+			// Read new frame
+			if (!depthVR.readFrame(&depthFrame, &ptsDepth)) {
+				printf("Couldn't load video frame\n");
+				return 1;
+			}
+			depthTexture.assignBuffer(depthFrame, depthVR.getWidth(), depthVR.getHeight());
+			depthTexture.bind();
+		}
+
 		// shaderProgram.assignUniform4fv("u_WindowScale", windowScale);
 		// shaderProgram.assignUniform4fv("u_FrameScale", frameScale);
 
@@ -235,7 +280,14 @@ int main(int argc, char** argv) {
 		// glm::mat4 proj = windowScale * defaultProj;
 		// glm::mat4 proj = defaultProj;
 
-		rotation += 0.5f;
+		if (ih.rightPressed())
+			rotation += 0.5f;
+		if (ih.leftPressed())
+			rotation -= 0.5f;
+		if (ih.upPressed())
+			depth += 0.05f;
+		if (ih.downPressed())
+			depth -= 0.05f;
 
 		mRotation = glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -244,13 +296,15 @@ int main(int argc, char** argv) {
 
 		mvp = proj * view * model;
 
+		shaderProgram.assignUniform1f("u_Depth", depth);
 		shaderProgram.assignUniform4fv("u_MVP", mvp);
 
 		shaderProgram.bind();
 		vao.bind();
 		// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		// glDrawElements(GL_PATCHES, 6, GL_UNSIGNED_INT, nullptr);
-		glDrawElements(GL_PATCHES, 4, GL_UNSIGNED_INT, nullptr);
+		// glDrawElements(GL_PATCHES, 4, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_PATCHES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, nullptr);
 
 		// Swap buffers and poll events
 		glfwSwapBuffers(window);

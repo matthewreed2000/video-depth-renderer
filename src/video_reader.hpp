@@ -40,6 +40,7 @@ private:
 	int height = 0;
 	int videoStreamIndex = -1;
 	int audioStreamIndex = -1;
+	bool repeat = true;
 	AVRational timeBase;
 
 	bool init(const char* filename);
