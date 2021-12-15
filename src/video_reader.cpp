@@ -2,15 +2,24 @@
 // https://www.youtube.com/playlist?list=PLKucWgGjAuTbobNC28EaR9lbGQTVyD9IS
 
 #include "video_reader.hpp"
+#include "files.hpp"
 
 #include <stdio.h>
 
 VideoReader::VideoReader(const char* filename) {
-	success = init(filename);
+	if (!filename) {
+		printf("No video file given\n");
+	}
+	else if (!files::exists(filename)) {
+		printf("Failed to locate video file '%s'\n", filename);
+	}
+	else {
+		printf("Succesfully found video file '%s'\n", filename);
+		success = init(filename);
 
-	if (!success) {
-		printf("Couldn't open video");
-		throw 1;
+		if (!success) {
+			printf("Couldn't open video");
+		}
 	}
 }
 
@@ -149,6 +158,30 @@ void VideoReader::destroy() {
 }
 
 bool VideoReader::readFrame(uint8_t** frameBuffer, int64_t* pts) {
+	// Give bright magenta if there is an error
+	if (!success) {
+		width = 1;
+		height = 1;
+
+		if (*frameBuffer)
+		{
+			delete [] *frameBuffer;
+			*frameBuffer = nullptr;
+		}
+		*frameBuffer = new uint8_t[4];
+
+		(*frameBuffer)[0] = 255;
+		(*frameBuffer)[1] = 0;
+		(*frameBuffer)[2] = 255;
+		(*frameBuffer)[3] = 255;
+
+		if (pts)
+			*pts = 0;
+
+		return false;
+	}
+
+	// Otherwise, read the frame
 	int readResponse;
 	int response;
 

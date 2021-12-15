@@ -1,0 +1,33 @@
+#version 410 core
+
+// layout (triangles, equal_spacing, ccw) in;
+layout (quads) in;
+
+in vec3 te_Pos[];
+in vec2 te_Tex[];
+
+out vec3 f_Pos;
+out vec2 f_Tex;
+
+uniform mat4 u_MVP;
+uniform float u_Depth;
+
+uniform sampler2D tex0;
+
+vec2 interpolate2D(vec2 v0, vec2 v1)
+{
+    float pos_x = mix(v0.x, v1.x, gl_TessCoord.x);
+    float pos_y = mix(v0.y, v1.y, gl_TessCoord.y);
+
+    return vec2(pos_x, pos_y);
+}
+
+void main() {
+    vec2 out_Tex = interpolate2D(te_Tex[0], te_Tex[2]);
+    vec3 out_Pos = vec3(interpolate2D(te_Pos[0].xy, te_Pos[2].xy), texture(tex0, out_Tex).r * u_Depth);
+
+    f_Pos = out_Pos;
+    f_Tex = vec2(out_Tex.x - 0.5f, out_Tex.y);
+
+    gl_Position = u_MVP * vec4(out_Pos, 1.0);
+}

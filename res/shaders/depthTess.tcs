@@ -1,0 +1,25 @@
+#version 410 core
+
+layout (vertices = 4) out;
+
+// Inputs
+in vec3 tc_Pos[];
+in vec2 tc_Tex[];
+
+// Outputs (to Tess Eval)
+out vec3 te_Pos[];
+out vec2 te_Tex[];
+
+void main() {
+    te_Pos[gl_InvocationID] = tc_Pos[gl_InvocationID];
+    te_Tex[gl_InvocationID] = tc_Tex[gl_InvocationID];
+
+    if (gl_InvocationID == 0) {
+        gl_TessLevelInner[0] = 50;
+        gl_TessLevelInner[1] = 50;
+        gl_TessLevelOuter[0] = 50;
+        gl_TessLevelOuter[1] = 50;
+        gl_TessLevelOuter[2] = 50;
+        gl_TessLevelOuter[3] = 50;
+    }
+}
