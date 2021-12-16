@@ -4,6 +4,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+// #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -206,7 +208,9 @@ int main(int argc, char** argv) {
 	float rotationY = 0.0f;
 	float depth = 0.5f;
 
-	glm::vec3 pos = glm::vec3(0.0f, 0.0f, -4.0f);
+	float speed = 0.1f;
+
+	glm::vec4 pos = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
 
 	glm::mat4 mScale;
 	if (frameWidth > frameHeight)
@@ -216,6 +220,7 @@ int main(int argc, char** argv) {
 
 	glm::mat4 model = glm::mat4(1.0f);
 	
+	glm::mat4 vRotation = glm::mat4(1.0f);
 	glm::mat4 view = glm::mat4(1.0f);
 
 	glm::mat4 proj = glm::mat4(1.0f);
@@ -240,7 +245,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Read color frame at speed
-		if (ptsColor != 0) {
+		// if (ptsColor != 0) {
 			if (glfwGetTime() > ptsColor * (double)colorVR.getTimeBase().num / (double)colorVR.getTimeBase().den)
 			{
 				// Read new frame
@@ -251,7 +256,7 @@ int main(int argc, char** argv) {
 				colorTexture.assignBuffer(colorFrame, colorVR.getWidth(), colorVR.getHeight());
 				colorTexture.bind();
 			}
-		}
+		// }
 
 		// Read depth frame at speed
 		if (depthDefined && ptsColor != 0) {
@@ -277,6 +282,25 @@ int main(int argc, char** argv) {
 		// glm::mat4 proj = windowScale * defaultProj;
 		// glm::mat4 proj = defaultProj;
 
+
+		if (ih.upPressed())
+			pos = pos + glm::rotate(glm::mat4(1.0f), glm::radians(-rotationX), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0.0f, 0.0f, speed, 0.0f);
+		if (ih.downPressed())
+			pos = pos + glm::rotate(glm::mat4(1.0f), glm::radians(-rotationX), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(0.0f, 0.0f, -speed, 0.0f);
+		if (ih.leftPressed())
+			pos = pos + glm::rotate(glm::mat4(1.0f), glm::radians(-rotationX), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(speed, 0.0f, 0.0f, 0.0f);
+		if (ih.rightPressed())
+			pos = pos + glm::rotate(glm::mat4(1.0f), glm::radians(-rotationX), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(-speed, 0.0f, 0.0f, 0.0f);
+		if (ih.spacePressed())
+			pos = pos + glm::vec4(0.0f, -speed, 0.0f, 0.0f);
+		if (ih.shiftPressed())
+			pos = pos + glm::vec4(0.0f, speed, 0.0f, 0.0f);
+
+		if (ih.getMouseScroll() > 0)
+			depth += 0.01;
+		if (ih.getMouseScroll() < 0)
+			depth -= 0.01;
+
 		if (ih.mouseClicked())
 			ih.attachMouse(window);
 		if (ih.escapePressed())
@@ -285,19 +309,13 @@ int main(int argc, char** argv) {
 		rotationX += (ih.getMouseMoveX() / width) * 360;
 		rotationY += (ih.getMouseMoveY() / height) * 360;
 
-		// if (ih.upPressed())
-			// pos = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		if (ih.downPressed())
-			depth -= 0.05f;
-
-		// printf("%f\n", ih.getMouseScroll());
-
-
 		model = mScale;
 
-		view = glm::translate(glm::mat4(1.0f), pos);
-		view = glm::rotate(glm::mat4(1.0f), glm::radians(rotationX), glm::vec3(0.0f, 1.0f, 0.0f)) * view;
-		view = glm::rotate(glm::mat4(1.0f), glm::radians(rotationY), glm::vec3(1.0f, 0.0f, 0.0f)) * view;
+		vRotation = glm::rotate(glm::mat4(1.0f), glm::radians(rotationX), glm::vec3(0.0f, 1.0f, 0.0f));
+		vRotation = glm::rotate(glm::mat4(1.0f), glm::radians(rotationY), glm::vec3(1.0f, 0.0f, 0.0f)) * vRotation;
+
+		view = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z));
+		view = vRotation * view;
 
 		mvp = proj * view * model;
 

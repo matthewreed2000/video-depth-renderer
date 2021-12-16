@@ -10,11 +10,13 @@ InputHandler::InputHandler(GLFWwindow* window) {
 	glfwSetCursorPosCallback(window, cursorPosCallback);
 	glfwSetScrollCallback(window, scrollCallback);
 
-	keymap[25] = 1; // W
-	keymap[38] = 2; // A
-	keymap[39] = 4; // S
-	keymap[40] = 8; // D
-	keymap[9] = 16; // ESC
+	keymap[25] = 1;  // W
+	keymap[38] = 2;  // A
+	keymap[39] = 4;  // S
+	keymap[40] = 8;  // D
+	keymap[65] = 16; // SPACE
+	keymap[50] = 32; // SHIFT
+	keymap[9] = 64;  // ESC
 }
 
 InputHandler::~InputHandler() {
@@ -32,7 +34,7 @@ bool InputHandler::isMapped(int key) {
 }
 
 void InputHandler::pressKey(int key) {
-	std::cout << key << std::endl;
+	// std::cout << key << std::endl;
 	if (isMapped(key))
 		keys = keys | keymap[key];
 }

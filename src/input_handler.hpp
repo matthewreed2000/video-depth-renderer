@@ -20,7 +20,9 @@ public:
 	inline bool downPressed() { return (keys & 4); };
 	inline bool leftPressed() { return (keys & 2); };
 	inline bool rightPressed() { return (keys & 8); };
-	inline bool escapePressed() { return (keys & 16); };
+	inline bool spacePressed() { return (keys & 16); };
+	inline bool shiftPressed() { return (keys & 32); };
+	inline bool escapePressed() { return (keys & 64); };
 
 	// Mouse
 	inline double getMouseMoveX() { return (mouseAttached ? mouseX - prev_mouseX : 0); };
