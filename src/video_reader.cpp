@@ -44,7 +44,7 @@ bool VideoReader::init(const char* filename) {
 
 	// Find the first valid video stream
 	AVCodecParameters* avCodecParams;
-	AVCodec* avCodec;
+	const AVCodec* avCodec;
 
 	bool videoCodecFound = false;
 	bool audioCodecFound = false;
